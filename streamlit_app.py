@@ -641,6 +641,8 @@ def step_5_training_and_results():
         1. **Value Function Approximation**: training a neural network to learn the long-term costs of different decisions
         2. **Policy Optimization**: finding the control policy that minimizes your cost function
         3. **Monte Carlo Simulation**: comparing your proposed policy against the optimal one
+                    
+        This can take a few minutes.
         """)
         
         # show training progress
