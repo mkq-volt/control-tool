@@ -1107,6 +1107,8 @@ def main():
     # volt capital logo in top left
     st.markdown("[![Volt Capital](https://raw.githubusercontent.com/mkq-volt/depin_sim/main/img/voltcap.svg)](https://volt.capital/)")
     
+    st.markdown("---")
+
     st.title("DePIN Protocol Designer")
     st.markdown("Design and optimize control policies for generalized DePIN")
     
