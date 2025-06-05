@@ -1,0 +1,14 @@
+[project]
+name = "control-tool"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.3.0",
+    "plotly>=6.1.2",
+    "scikit-learn>=1.6.1",
+    "scipy>=1.15.3",
+    "streamlit>=1.45.1",
+]
