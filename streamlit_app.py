@@ -537,13 +537,13 @@ def step_4_cost_function():
         
         utilization_weight = st.number_input(
             "Utilization Importance", 
-            value=2.5,
+            value=1.0,
             help="How important is maintaining target utilization"
         )
         
         capacity_weight = st.number_input(
             "Capacity Growth Importance", 
-            value=1.0,
+            value=1.5,
             help="How important is achieving target capacity growth"
         )
     
@@ -1103,6 +1103,9 @@ def main():
         layout="wide",
         initial_sidebar_state="collapsed"
     )
+    
+    # volt capital logo in top left
+    st.markdown("[![Volt Capital](https://raw.githubusercontent.com/mkq-volt/depin_sim/main/img/voltcap.svg)](https://volt.capital/)")
     
     st.title("DePIN Protocol Designer")
     st.markdown("Design and optimize control policies for generalized DePIN")
