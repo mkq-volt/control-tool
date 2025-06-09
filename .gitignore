@@ -9,6 +9,15 @@ wheels/
 # Virtual environments
 .venv
 
+# System files
+.DS_Store
+*.png
+*.jpg
+*.jpeg
+
+# Temporary files
+*.tmp
+*.log
 
 .python-version
 control widget PRD.md

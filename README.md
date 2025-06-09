@@ -1,156 +1,131 @@
 # depin control tool
 
-optimal control framework for depin protocol optimization
+optimal control framework for decentralized physical infrastructure networks
 
-## overview
+## system dynamics
 
-this tool enables protocol designers to simulate, evaluate, and optimize controller designs using formal optimal control methods. it provides a complete framework for analyzing token emission policies and incentive structures in decentralized infrastructure networks.
+the protocol evolves according to the following state update equations:
 
-## 🎮 streamlit interface
+### state variables
+- **S(t)**: token supply
+- **R(t)**: usd reserve 
+- **P(t)**: token price
+- **C(t)**: network capacity
+- **D(t)**: service demand
+- **Td(t)**: token demand
 
-interactive web interface for designing and optimizing depin controllers.
+### control variables
+- **u₁(t)**: mint rate (tokens/timestep)
+- **u₂(t)**: burn share ∈ [0,1]
 
-### quick start
-```bash
-# install dependencies
-uv add streamlit plotly pandas
+### dynamics
 
-# run the interface
-uv run python run_app.py
+**supply evolution:**
+```
+S(t+1) = S(t) + u₁(t) - B(t)
 ```
 
-then open http://localhost:8501 in your browser.
+**reserve evolution:**
+```
+R(t+1) = R(t) + Rev(t) + B(t) × P(t) × (1 - u₂(t))
+```
 
-### workflow
-1. **controller selection**: choose between inflation policy or service pricing optimization
-2. **system configuration**: input initial protocol state with auto-validation and calculated metrics
-3. **policy design**: configure your proposed control policy
-4. **objectives**: set cost function targets and weights with mathematical explanations
-5. **optimization**: train value function and compare optimal vs proposed policies
+**price formation:**
+```
+P(t+1) = (1-λ) × V₀ × [Td(t)/S(t+1)] × [1 + β × U(t+1)] × [1 + γ × M(t)]
+         + λ × P(t) × [1 + M(t)]
+```
 
-### features
-- guided wizard interface with progress tracking
-- real-time input validation and stability suggestions
-- simplified inputs with auto-calculated token demand (50% of supply)
-- interactive policy configuration with live examples
-- comprehensive mathematical explanations of cost functions
-- monte carlo simulation results with confidence intervals
-- trajectory visualizations for all state variables
+**capacity evolution:**
+```
+C(t+1) = C(t) × [1 + κ × max(0, π(t) - 1) - δ]
+where π(t) = [u₁(t) × P(t) / C(t)] / [c₀ × (1 + α × C(t))]
+```
 
-## current implementation
+**service demand with network effects:**
+```
+D(t+1) = D(t) × [1 + ε₁ × (C(t)/C(0) - 1) + ε₂ × (P(t)/P(0) - 1) + σ_d × ω_d(t)]
+```
 
-### ✅ network-aware system dynamics
-- **system_dynamics.py**: protocol mechanics with coupled service demand and capacity growth
-- **depin_utils.py**: utilities for simulation, validation, and stability analysis
-- network effects: service demand grows with capacity and token value
-- balanced capacity economics with natural depreciation
-- significantly reduced utilization penalty dominance (from 83% to ~53%)
+**burned tokens:**
+```
+B(t) = min(D(t), C(t)) × p_s × u₂(t) / P(t)
+```
 
-### ✅ comprehensive cost function 
-- **cost_function.py**: user-configurable optimization objectives
-- three core objectives: price growth, utilization minimum, capacity growth
-- quadratic penalty functions with scale normalization
-- robust multi-run evaluation with confidence intervals and significance testing
+**utilization:**
+```
+U(t) = min(1, D(t)/C(t))
+```
 
-### ✅ robust value function approximation
-- **value_function.py**: fitted value iteration with comprehensive state coverage
-- neural network architecture: 6 → 96 → 64 → 32 → 1 with tanh activation
-- utilization-aware state sampling focusing on problematic ranges (0.5-0.9)
-- multi-method bellman optimization: l-bfgs-b + differential evolution + grid search fallback
-- built-in validation against random alternative policies
+where ω_d(t), M(t) are gaussian noise terms.
 
-### ✅ optimal control
-- **optimal_control.py**: complete workflow for policy training and comparison
-- trains optimal policies using fitted value iteration with robust optimization
-- compares user policies against optimal with statistical significance testing
-- comprehensive evaluation with cost breakdowns and confidence intervals
+## cost function
 
-### ✅ streamlit interface
-- **streamlit_app.py**: interactive web interface for controller design
-- guided 5-step workflow from controller selection to optimization results
-- real-time validation with stability suggestions
-- mathematical explanations and interactive visualizations
-- monte carlo comparison with confidence interval plots
+quadratic penalty optimization:
+```
+J = Σₜ γᵗ [w₁(ġ_p(t) - ġ_p*)² + w₂ max(0, U* - U(t))² + w₃(ġ_c(t) - ġ_c*)²]
+```
+
+where:
+- ġ_p(t) = (P(t) - P(t-1))/P(t-1): price growth rate
+- ġ_c(t) = (C(t) - C(t-1))/C(t-1): capacity growth rate
+- (w₁, w₂, w₃): user-defined objective weights
+- (ġ_p*, U*, ġ_c*): target values
+
+## parameter values
+
+**network effects:**
+- ε₁ = 0.02 (service network effect)
+- ε₂ = 0.015 (service value effect)
+
+**price formation:**
+- V₀ = 1.0 (base utility value)
+- β = 0.2 (utilization price boost)
+- λ = 0.3 (speculation weight)
+- γ = 0.5 (market sensitivity)
+
+**capacity dynamics:**
+- κ = 0.008 (response speed)
+- δ = 0.005 (depreciation rate) 
+- c₀ = 0.012 (cost ratio)
+- α = 0.0001 (cost scale factor)
+
+**service economics:**
+- p_s = 1.0 (service price)
+
+**volatility:**
+- σ_d = 0.05 (service demand volatility)
+
+**cost function defaults:**
+- γ = 0.95 (discount factor)
+- (ġ_p*, U*, ġ_c*) = (0.018, 0.8, 0.025)
 
 ## usage
 
-### web interface (recommended)
+### streamlit interface
 ```bash
 uv run python run_app.py
 ```
 
-### programmatic usage
-
-#### basic cost evaluation
+### programmatic
 ```python
-from cost_function import CostFunction, CostWeights, CostTargets
+from optimal_control import OptimalController
+from cost_function import CostWeights, CostTargets
 
 weights = CostWeights(price_growth=1.5, utilization_min=2.0, capacity_growth=1.0)
-targets = CostTargets(price_growth=0.015, utilization_min=0.75, capacity_growth=0.01)
-cost_fn = CostFunction(weights, targets)
+targets = CostTargets(price_growth=0.018, utilization_min=0.8, capacity_growth=0.025)
 
-evaluation = cost_fn.evaluate_policy_robust(initial_state, policy, timesteps=50, num_runs=10)
-```
-
-#### optimal control workflow
-```python
-from optimal_control import OptimalController, TrainingConfig
-
-# define objectives
 controller = OptimalController(weights, targets)
+controller.train_optimal_policy()
 
-# train optimal policy with comprehensive coverage
-training_config = TrainingConfig(
-    num_trajectories=200, 
-    fvi_iterations=6,
-    utilization_aware_sampling=True,
-    state_space_coverage='comprehensive',
-    use_global_optimization=True
-)
-controller.train_optimal_policy(training_config)
-
-# compare policies with robust evaluation
-user_policies = {
-    'conservative': {'mint_rate': 10_000, 'burn_share': 0.8},
-    'aggressive': {'mint_rate': 100_000, 'burn_share': 0.2}
-}
-comparison = controller.compare_policies(initial_state, user_policies, num_runs=20)
-controller.print_comparison_summary(comparison)
+optimal_policy = controller.get_optimal_policy(initial_state)
 ```
 
-## architecture
+## implementation
 
-focused on clean separation of concerns with comprehensive coverage:
-- **dynamics**: network-aware protocol mechanics with coupled demand-capacity growth
-- **cost**: user-defined objectives with robust multi-run evaluation
-- **control**: fitted value iteration with comprehensive state coverage and multi-method optimization
-- **evaluation**: statistical comparison with confidence intervals and significance testing
-- **interface**: guided streamlit workflow with educational explanations
-
-## performance
-
-- **training time**: 10-15 seconds for full optimal policy training (150 trajectories, 4 iterations)
-- **evaluation**: robust multi-run policy comparison with statistical significance
-- **scalability**: works across 100x protocol size differences with utilization-aware sampling
-- **accuracy**: utilization penalty dominance reduced from 83% to ~53%
-- **coverage**: comprehensive state space sampling with focus on problematic utilization ranges
-- **interface**: responsive web ui with real-time validation and interactive visualizations
-
-## key improvements
-
-- **reduced utilization penalty dominance**: network effects couple service demand to capacity growth
-- **comprehensive state coverage**: utilization-aware sampling focuses on critical ranges (0.5-0.9)
-- **robust optimization**: multi-method bellman solving (l-bfgs-b + differential evolution + grid search)
-- **statistical rigor**: confidence intervals and significance testing for policy comparisons
-- **validation framework**: systematic verification of learned optimal policies
-- **user interface**: guided wizard with educational explanations and interactive visualizations
-
-## status
-
-production-ready implementation with all prd phases complete and significant enhancements:
-- ✅ network-aware system dynamics with balanced utilization
-- ✅ comprehensive controller design with robust optimization
-- ✅ user-configurable cost functions with statistical evaluation
-- ✅ optimal policy approximation with extensive state coverage
-- ✅ robust simulation & evaluation with confidence intervals
-- ✅ interactive streamlit interface with guided workflow
+- **system_dynamics.py**: state evolution equations
+- **cost_function.py**: quadratic penalty optimization
+- **value_function.py**: fitted value iteration
+- **optimal_control.py**: policy optimization
+- **streamlit_app.py**: interactive interface
+- **depin_utils.py**: simulation utilities
