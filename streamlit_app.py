@@ -199,12 +199,12 @@ def validate_step_4(cost_config):
 
 def step_1_controller_selection():
     """Step 1: choose controller type"""
-    st.header("Step 1: choose controller to optimize")
+    st.header("Step 1: choose design decision to optimize")
     
     controller_type = st.radio(
         "What do you want to optimize?",
-        ["Inflation Policy - optimize policy to decide token mint and burn at every timestep",
-         "Service Pricing - optimize policy to decide service price at every timestep"],
+        ["Inflation  - optimize decision to mint and burn tokens at every timestep",
+         "Service Pricing - optimize decision to set service price at every timestep"],
         key="controller_selection"
     )
     
@@ -230,7 +230,7 @@ def step_2_initial_state():
     st.markdown("""
     **Configure your protocol's starting state**
     
-    We'll automatically adjust these values to ensure stability and good performance.
+    We'll automatically adjust these values to ensure stability based on the dynamics of the system.
     """)
     
     # show "use smart defaults" button
@@ -1290,17 +1290,33 @@ def main():
     )
     
     # volt capital logo in top left
-    st.markdown("[![Volt](https://raw.githubusercontent.com/mkq-volt/depin_sim/main/img/voltcap.svg)](https://volt.capital/)")
+    st.markdown("""
+    <div style="display: flex; align-items: center;">
+        <a href="https://volt.capital/">
+            <img src="https://raw.githubusercontent.com/mkq-volt/depin_sim/main/img/voltcap.svg" 
+                 alt="Volt" 
+                 style="width: 150px; height: auto;">
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown(" ")
 
-    st.title("DePIN Protocol Designer")
-    st.markdown("Design and optimize control policies for generalized DePIN")
+    st.title("DePIN Protocol Design Tool")
+    st.markdown("""
+    Based on the framework in [this article](https://volt.capital/blog/designing-depin-protocols-using-optimal-control-theory), 
+    this tool helps simulate a robust DePIN economy and optimize the design decisions you're working on. 
+    
+    You set the goals for price growth, utilization, and capacity growth, and the tool will suggest the optimal policy to achieve those goals. 
+    
+    For more information on the mathematical framework and value function approximation, see the repo.
+
+    """)
     
     initialize_session_state()
     
     # progress indicator with boxes
-    steps = ["1. select controller", "2. configure system", "3. design policy", "4. set objectives", "5. optimize & compare"]
+    steps = ["1. select design choice", "2. configure system", "3. design policy", "4. set objectives", "5. optimize & compare"]
     current_step = st.session_state.step
     
     # create boxed progress indicator
@@ -1364,6 +1380,21 @@ def main():
         step_4_cost_function()
     elif current_step == 5:
         step_5_training_and_results()
+
+    st.markdown("")
+    st.markdown("")
+    st.markdown("")
+    st.markdown("")
+    st.markdown("")
+    st.markdown("")
+    st.markdown("")
+
+
+    st.divider()
+
+    st.markdown("""
+    *Note that this tool does not and will not predict token prices or serve as investment advice. This is purely a design and research aid.*
+    """)
 
 
 if __name__ == "__main__":

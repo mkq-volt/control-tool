@@ -166,7 +166,11 @@ def calculate_control_ranges(initial_state: Dict[str, float], use_reactive: bool
         'mint_rate': mint_range,
         'burn_share': burn_range,
         'base_service_price': base_price_range,
-        'price_elasticity': elasticity_range
+        'price_elasticity': elasticity_range,
+        'system_info': {
+            'supply': supply,
+            'utilization': utilization
+        }
     }
 
 
@@ -222,19 +226,27 @@ def validate_and_suggest_controls(initial_state: Dict[str, float],
     # get validation from system params
     validation = validate_inputs(initial_state, mint_rate, use_reactive)
     
+    # collect all issues
+    issues = validation.get('warnings', [])
     suggestions = validation.get('suggestions', {})
     
-    # add control-specific suggestions
+    # add control-specific validations
     if burn_share < 0.1 or burn_share > 0.9:
+        issues.append(f"burn share ({burn_share:.1%}) should be between 10% and 90%")
         suggestions['burn_share'] = 0.5
     
     # suggest stable controls if current ones are problematic
-    if validation['stability_score'] > 2:
+    if validation.get('stability_score', 0) > 2:
         stable_controls = get_stable_controls(initial_state, use_reactive)
         suggestions.update(stable_controls)
+        issues.append("policy may cause instability - consider suggested improvements")
+    
+    # determine if validation passed
+    is_valid = len(issues) == 0
     
     return {
-        'validation': validation,
+        'is_valid': is_valid,
+        'issues': issues,
         'suggestions': suggestions,
         'recommended_controls': suggestions if suggestions else proposed_controls
     }
