@@ -894,8 +894,18 @@ def step_5_training_and_results():
     with st.expander("Training details", expanded=False):
         training_result = results['training_result']
         st.write(f"**Training time**: {training_result['training_time']:.1f} seconds")
+        st.write(f"**Iterations completed**: {training_result.get('iterations_completed', 'N/A')}")
+        st.write(f"**Training method**: {training_result.get('method', 'fitted value iteration')}")
+        st.write(f"**Converged**: {'Yes' if training_result.get('converged', False) else 'No'}")
         st.write(f"**Final value change**: {training_result.get('final_value_change', 'N/A')}")
-        st.write(f"**Training samples**: {training_result.get('training_samples', 'N/A')}")
+        
+        # show additional metrics if available
+        if 'final_loss' in training_result:
+            st.write(f"**Final loss**: {training_result['final_loss']:.6f}")
+        
+        # show training trajectories used
+        if 'training_samples' in training_result:
+            st.write(f"**State-action pairs evaluated**: {training_result['training_samples']:,}")
         
         # show actual policy differences
         optimal_policy = comparison['results']['optimal']['policy']
